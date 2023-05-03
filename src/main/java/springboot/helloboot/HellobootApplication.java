@@ -10,7 +10,22 @@ public class HellobootApplication {
 
 	public static void main(String[] args) {
 		/*--------- 스프링 컨테이너 작성 및 빈 초기화 시작 ---------*/
-		GenericWebApplicationContext applicationContext = new GenericWebApplicationContext();
+		GenericWebApplicationContext applicationContext = new GenericWebApplicationContext() {
+			@Override
+			protected void onRefresh() {
+				super.onRefresh();
+
+				/*--------- 서블릿 컨테이너 실행 및 서블릿 등록 시작 ---------*/
+				ServletWebServerFactory serverFactory = new TomcatServletWebServerFactory();
+				WebServer webServer = serverFactory.getWebServer(servletContext -> {
+					servletContext.addServlet("dispatcherServlet",
+							new DispatcherServlet(this)
+					).addMapping("/*");
+				});
+				webServer.start();
+				/*--------- 서블릿 컨테이너 실행 및 서블릿 등록 끝 ---------*/
+			}
+		};
 		// application Context에 bean 등록 및 의존관계등록(알아서해줌)
 		applicationContext.registerBean(HelloController.class);
 		applicationContext.registerBean(SimpleHelloService.class);
@@ -18,15 +33,7 @@ public class HellobootApplication {
 		applicationContext.refresh();
 		/*--------- 스프링 컨테이너 작성 및 빈 초기화  끝 ---------*/
 
-		/*--------- 서블릿 컨테이너 실행 및 서블릿 등록 시작 ---------*/
-		ServletWebServerFactory serverFactory = new TomcatServletWebServerFactory();
-		WebServer webServer = serverFactory.getWebServer(servletContext -> {
-			servletContext.addServlet("dispatcherServlet",
-				new DispatcherServlet(applicationContext)
-			).addMapping("/*");
-		});
-		webServer.start();
-		/*--------- 서블릿 컨테이너 실행 및 서블릿 등록 끝 ---------*/
+
 	}
 
 }
